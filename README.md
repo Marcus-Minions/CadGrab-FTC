@@ -1,6 +1,6 @@
 # GoBilda Parts (CadGrab Scraped)
 
-Here are the complete STEP files from goBILDA, scraped and organized by the [CadGrab scraper](https://github.com/Marcus-Minions/CadGrab). 
+Here are the complete STEP files from goBILDA, scraped and organized by the [CadGrab scraper](https://github.com/Marcus-Minions/CadGrab). You can download a compressed zip file of all the CAD files [here](https://drive.google.com/file/d/1TfamsgN20bg8ngEluyXsut2uvdDQl5Pa/view?usp=sharing).
 
 Collected by **Krshs90**, a contributor to the **[Marcus Minions](https://github.com/Marcus-Minions)** #22077.
 
@@ -28,8 +28,7 @@ Unlike standard web scrapers, goBILDA hides the vast majority of its product var
 
 ## Features
 
-- **100% Guaranteed Coverage:** Mathematically guarantees discovery of every product variant, even hidden ones.
-- **Blazing Fast:** Uses `concurrent.futures.ThreadPoolExecutor` to scan the site thousands of times faster than standard crawling.
+
 - **Smart Directory Organization:** Reads website breadcrumbs to automatically create a perfect categorized folder directory (e.g., `CAD_Files/MOTION/Motors/Yellow Jacket Planetary Gear Motors`).
 - **Path Sanitization:** Automatically truncates folder paths and removes invalid characters (e.g. `3/16"`) to prevent Windows crashes and abide by `MAX_PATH` length constraints.
 - **Auto-Renaming:** Standardizes and shortens file names (removes trademark symbols and long "Series" prefixes) to keep them clean for CAD software like Fusion.
@@ -67,7 +66,7 @@ If you want to quickly bulk import the downloaded `.step` files and perfectly ma
 4. Select the `FusionScript` folder located inside your cloned `CadGrab` directory.
 5. `CadGrab_Fusion_Import` should appear in the list! Select it and click **Run**.
 6. A dialog will prompt you to open the exact `CAD_Files` folder that the CadGrab scraper downloaded.
-7. Sit back! A progress bar will appear while Fusion automatically creates all your categories in your cloud Project and imports thousands of files for you. (If you cancel it, running it again will automatically skip duplicates!)
+7. Sit back! A progress bar will appear while Fusion automatically creates all your categories in your cloud Project and imports thousands of files for you. **Note: This process can take a significant amount of time depending on the number of files and your internet upload speed. For example, importing the entire goBILDA library takes approximately 3 hours.** (If you cancel it, running it again will automatically skip duplicates!)
 
 ## License
 
