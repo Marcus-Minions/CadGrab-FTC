@@ -2,7 +2,10 @@
 
 CadGrab is a powerful, automated Python scraper and download manager designed to extract, organize, and rename CAD (`.step`) files from the entire goBILDA robotics catalog.
 
-Developed by **Krshs90**, a contributor to the **[Marcus Minions](https://github.com/Marcus-Minions)** organization.
+Developed by **Krshs90**, a contributor to the **[Marcus Minions](https://github.com/Marcus-Minions)** #22077.
+
+Bug fixed by **Google Antigravity**
+ReadMe created by **Gemini 3.1 Pro**
 
 ## How it Works
 
