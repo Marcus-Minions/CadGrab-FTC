@@ -1,3 +1,14 @@
+# GoBilda Parts (CadGrab Scraped)
+
+Here are the complete STEP files from goBILDA, scraped and organized by the [CadGrab scraper](https://github.com/Marcus-Minions/CadGrab). 
+
+Collected by **Krshs90**, a contributor to the **[Marcus Minions](https://github.com/Marcus-Minions)** #22077.
+
+### Bulk Importing to Fusion 360
+If you want to manually upload these parts to Fusion 360 while keeping the perfect folder structure, this repository includes a custom [Fusion 360 Bulk Importer Extension](https://github.com/Marcus-Minions/CadGrab/tree/master/FusionScript).
+
+---
+
 # CadGrab
 
 CadGrab is a powerful, automated Python scraper and download manager designed to extract, organize, and rename CAD (`.step`) files from the entire goBILDA robotics catalog.
