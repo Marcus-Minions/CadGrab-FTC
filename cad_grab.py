@@ -42,6 +42,30 @@ def clean_filename(name: str) -> str:
     name = re.sub(r'[\\/*?:"<>|]', "", name)
     return name.strip()
 
+KEYWORD_CATEGORIES = {
+    "motor controller": "ELECTRONICS", "servo controller": "ELECTRONICS", "spark": "ELECTRONICS",
+    "sensor": "ELECTRONICS", "cable": "ELECTRONICS", "wire": "ELECTRONICS", "battery": "ELECTRONICS",
+    "power": "ELECTRONICS", "switch": "ELECTRONICS", "control hub": "ELECTRONICS",
+    "expansion hub": "ELECTRONICS", "camera": "ELECTRONICS", "vision": "ELECTRONICS", "logic level": "ELECTRONICS",
+    "motor": "MOTION", "servo": "MOTION", "wheel": "MOTION", "gear": "MOTION", "sprocket": "MOTION",
+    "pulley": "MOTION", "belt": "MOTION", "chain": "MOTION", "bearing": "MOTION", "shaft": "MOTION",
+    "axle": "MOTION", "hub": "MOTION", "mecanum": "MOTION", "omni": "MOTION", "caster": "MOTION",
+    "pinion": "MOTION", "gearbox": "MOTION", "linear": "MOTION", "lead screw": "MOTION",
+    "channel": "STRUCTURE", "extrusion": "STRUCTURE", "tube": "STRUCTURE", "plate": "STRUCTURE",
+    "bracket": "STRUCTURE", "mount": "STRUCTURE", "beam": "STRUCTURE", "rail": "STRUCTURE",
+    "standoff": "STRUCTURE", "spacer": "STRUCTURE", "gusset": "STRUCTURE", "spline": "STRUCTURE",
+    "screw": "HARDWARE", "nut": "HARDWARE", "bolt": "HARDWARE", "washer": "HARDWARE",
+    "collar": "HARDWARE", "zip tie": "HARDWARE", "fastener": "HARDWARE", "spring": "HARDWARE",
+    "bungee": "HARDWARE", "surgical tubing": "HARDWARE", "insert": "HARDWARE", "shim": "HARDWARE"
+}
+
+def guess_category_from_name(name: str) -> str:
+    lower_name = name.lower()
+    for kw, cat in KEYWORD_CATEGORIES.items():
+        if kw in lower_name:
+            return cat
+    return "UNCATEGORIZED"
+
 def normalize_category(cat: str) -> str:
     cleaned = re.sub(r'[\\/*?:"<>|]', " ", cat).strip()
     cleaned = re.sub(r'\s+', " ", cleaned)
@@ -245,7 +269,8 @@ class GobildaScraper(BaseScraper):
                 breadcrumbs.append(normalize_category(text))
                 
         if not breadcrumbs:
-            breadcrumbs = ["UNCATEGORIZED"]
+            guessed = guess_category_from_name(clean_name)
+            breadcrumbs = [guessed]
 
         step_link = None
         links = soup.select('a')
@@ -340,7 +365,8 @@ class RevScraper(BaseScraper):
                 breadcrumbs.append(normalize_category(text))
                 
         if not breadcrumbs:
-            breadcrumbs = ["UNCATEGORIZED"]
+            guessed = guess_category_from_name(clean_name)
+            breadcrumbs = [guessed]
 
         step_link = None
         # REV usually has STEP files labeled "STEP File" or ends with .step
@@ -439,7 +465,8 @@ class AndyMarkScraper(BaseScraper):
                 breadcrumbs.append(normalize_category(text))
                 
         if not breadcrumbs:
-            breadcrumbs = ["UNCATEGORIZED"]
+            guessed = guess_category_from_name(clean_name)
+            breadcrumbs = [guessed]
 
         step_link = None
         links = soup.select('a')
