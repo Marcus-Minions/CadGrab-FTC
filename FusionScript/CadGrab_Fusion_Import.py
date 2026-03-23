@@ -3,6 +3,10 @@ import os
 import json
 import tempfile
 import urllib.request
+import urllib.error
+import ssl
+import shutil
+import zipfile
 from urllib.parse import urlparse
 
 _app = None
@@ -133,8 +137,8 @@ def do_import(target_project, root_local_folder, selected_subdirs, import_root_f
                         "folder_parts": folder_parts,
                         "url": url
                     })
-        except:
-            _ui.messageBox("Failed to parse cad_links_manifest.json.\nFalling back to local file import.")
+        except (json.JSONDecodeError, OSError, ValueError) as e:
+            _ui.messageBox(f"Failed to parse cad_links_manifest.json ({e}).\nFalling back to local file import.")
             link_entries = []
     
     progressDialog = _ui.createProgressDialog()
@@ -168,6 +172,7 @@ def do_import(target_project, root_local_folder, selected_subdirs, import_root_f
     
     files_imported = 0
     files_skipped = 0
+    files_failed = 0
     
     # Cloud Caching System! Extremely important for performance.
     # Key: dataFolder.id, Value: { "folders": {name: DataFolder}, "files": {name: bool} }
@@ -191,9 +196,44 @@ def do_import(target_project, root_local_folder, selected_subdirs, import_root_f
         return folder_cache[cloud_folder.id]
 
     def download_step_from_url(url):
-        with urllib.request.urlopen(url, timeout=30) as response:
+        context = ssl.create_default_context()
+        context.check_hostname = True
+        context.verify_mode = ssl.CERT_REQUIRED
+        request = urllib.request.Request(url, headers={"User-Agent": "CadGrab-Fusion-Importer"})
+        with urllib.request.urlopen(request, timeout=30, context=context) as response:
+            status_code = response.getcode()
+            if status_code and not (200 <= status_code < 300):
+                raise ValueError(f"HTTP status {status_code}")
+
+            content_type = response.headers.get("Content-Type", "").lower()
+            is_zip = url.lower().endswith(".zip") or "zip" in content_type
+
+            if "text/html" in content_type:
+                raise ValueError("Unexpected HTML response for STEP download")
+
+            if is_zip:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".zip") as tmp_zip:
+                    shutil.copyfileobj(response, tmp_zip)
+                    zip_path = tmp_zip.name
+                try:
+                    with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                        step_files = [f for f in zip_ref.namelist() if f.lower().endswith((".step", ".stp"))]
+                        if not step_files:
+                            raise ValueError("No STEP/STP file found in ZIP")
+                        selected_step = step_files[0]
+                        normalized = selected_step.replace("\\", "/")
+                        if normalized.startswith("/") or any(part == ".." for part in normalized.split("/")):
+                            raise ValueError("Unsafe STEP path in ZIP")
+                        with zip_ref.open(selected_step) as source:
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=".step") as tmp_step:
+                                shutil.copyfileobj(source, tmp_step)
+                                return tmp_step.name
+                finally:
+                    if os.path.exists(zip_path):
+                        os.remove(zip_path)
+
             with tempfile.NamedTemporaryFile(delete=False, suffix=".step") as tmp_step:
-                tmp_step.write(response.read())
+                shutil.copyfileobj(response, tmp_step)
                 return tmp_step.name
         
 
@@ -261,7 +301,7 @@ def do_import(target_project, root_local_folder, selected_subdirs, import_root_f
                 adsk.doEvents()
 
     def process_link_entries(current_cloud_folder):
-        nonlocal files_imported, files_skipped
+        nonlocal files_imported, files_skipped, files_failed
 
         for entry in link_entries:
             if progressDialog.wasCancelled:
@@ -297,16 +337,17 @@ def do_import(target_project, root_local_folder, selected_subdirs, import_root_f
                     cloud_contents["files"][base_name] = True
                     cloud_contents["files"][file_name] = True
                     files_imported += 1
-                except:
-                    pass
+                except (urllib.error.URLError, OSError, ValueError) as e:
+                    files_failed += 1
+                    print(f"[FAILED] Could not import '{file_name}' into folder '{destination_folder.name}' from link '{file_url}' ({e})")
                 finally:
                     if temp_file_path and os.path.exists(temp_file_path):
                         try:
                             os.remove(temp_file_path)
-                        except:
-                            pass
+                        except OSError as e:
+                            print(f"[WARN] Could not remove temp file '{temp_file_path}' ({e})")
 
-            progressDialog.progressValue = files_imported + files_skipped
+            progressDialog.progressValue = files_imported + files_skipped + files_failed
             adsk.doEvents()
 
     # Start the engine!
@@ -318,9 +359,9 @@ def do_import(target_project, root_local_folder, selected_subdirs, import_root_f
     progressDialog.hide()
     
     if progressDialog.wasCancelled:
-         _ui.messageBox(f'Import cancelled.\nUploaded: {files_imported}\nSkipped (Duplicates): {files_skipped}')
+         _ui.messageBox(f'Import cancelled.\nUploaded: {files_imported}\nSkipped (Duplicates): {files_skipped}\nFailed: {files_failed}')
     else:
-         _ui.messageBox(f'Import Complete!\nUploaded: {files_imported}\nSkipped (Duplicates): {files_skipped}')
+         _ui.messageBox(f'Import Complete!\nUploaded: {files_imported}\nSkipped (Duplicates): {files_skipped}\nFailed: {files_failed}')
 
 
 def run(context):
